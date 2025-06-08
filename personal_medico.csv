@@ -1,0 +1,46 @@
+empleado_id,nombre_completo,cedula_profesional,especialidad,centro_salud_id,turno,fecha_ingreso,telefono,email,activo,dias_laborales
+EMP0001,Dr. Ofelia Hidalgo,CEP3564503,Medicina Preventiva,CS001,Mixto,2016-10-19,1-328-897-3741x5404,opaz@example.net,True,"L,M,X,V"
+EMP0002,Silvano del Río Ortega,CEP7559883,Medicina General,CS001,Nocturno,2021-04-17,029.749.6243,,True,Variable
+EMP0003,Sr(a). Flavio Carbajal,CEP3381598,Medicina Preventiva,CS001,Vespertino,2025-03-09,268-895-7800x998,,True,Variable
+EMP0004,Ing. Gerónimo Armendáriz,CEP9119003,Medicina Preventiva,CS001,Vespertino,2018-05-25,614.790.1552x16901,leonelsamaniego@example.com,True,L-S
+EMP0005,Francisco Reyna Reynoso,CEP1228123,Enfermería,CS002,Nocturno,2015-08-15,148.794.5455x304,marianocenteno@example.org,True,Variable
+EMP0006,Mónica Leonardo Gonzales,CEP5554337,Odontología,CS002,Matutino,2021-06-23,355-829-7869,torresmaria-del-carmen@example.org,True,"L,M,X,V"
+EMP0007,Amanda Pilar Narváez Peralta,CEP3584187,Medicina Preventiva,CS002,Mixto,2023-04-02,+71(7)3522215105,,True,"L,M,X,V"
+EMP0008,Nicolás Alejandro Alfaro,CEP2000294,Medicina General,CS003,Nocturno,2023-10-13,+24(6)5360607665,,True,Variable
+EMP0009,Cristian Prieto,CEP2798349,Medicina Preventiva,CS003,Mixto,2024-10-24,366.466.3495,,True,Variable
+EMP0010,Daniela Bustamante,CEP1175850,Odontología,CS003,Matutino,2017-11-15,794-518-9722x1378,,True,Variable
+EMP0011,Zeferino Socorro Jaramillo,CEP1733518,Medicina Preventiva,CS003,Vespertino,2015-12-24,170.129.0007x8193,,True,L-S
+EMP0012,Flavio Emilia Colón,CEP8149852,Enfermería,CS003,Vespertino,2019-05-08,637.427.1291,,True,L-V
+EMP0013,Rodrigo Melgar,CEP2882140,Medicina General,CS003,Nocturno,2019-11-22,(915)889-6596x080,,True,L-S
+EMP0014,Renato Karina Perea,CEP9666305,Medicina Preventiva,CS003,Matutino,2019-03-27,042-243-8084x31193,,True,L-V
+EMP0015,Rosa Humberto Chacón,CEP5902554,Enfermería,CS003,Matutino,2021-05-21,04866229089,,True,L-V
+EMP0016,Yuridia Brito,CEP7751188,Enfermería,CS004,Nocturno,2018-11-29,745.373.6949,,True,L-S
+EMP0017,Lic. Miriam Alva,CEP6167115,Odontología,CS004,Mixto,2016-11-05,(848)047-0407x50369,,True,Variable
+EMP0018,Sofía Garza,CEP1202431,Medicina General,CS004,Nocturno,2020-11-30,1-380-069-9779x17735,,True,"L,M,X,V"
+EMP0019,Jesús Delgadillo,CEP2909957,Medicina General,CS004,Vespertino,2016-03-02,(148)395-6867,hector91@example.org,True,Variable
+EMP0020,Cristina Alarcón Brito,CEP7761659,Enfermería,CS004,Mixto,2016-12-11,1-782-889-3750,whernandez@example.org,True,L-S
+EMP0021,Conchita Segura Campos,CEP4152060,Enfermería,CS005,Matutino,2018-11-28,1-548-930-0815x123,,True,Variable
+EMP0022,Silvia Reynaldo Reyna,CEP3048534,Enfermería,CS005,Vespertino,2023-02-06,979.876.3455,,True,Variable
+EMP0023,María Micaela Rubio,CEP5404796,Odontología,CS005,Matutino,2019-10-25,136-708-9811,noemivalles@example.com,True,Variable
+EMP0024,Mtro. Nadia Jaimes,CEP3350619,Enfermería,CS005,Nocturno,2021-09-09,225.560.3393x92434,yloya@example.net,True,Variable
+EMP0025,Lic. Estela Madera,CEP6679386,Medicina Preventiva,CS005,Vespertino,2017-08-22,(839)263-5188x4221,mriojas@example.com,True,L-S
+EMP0026,María Isabela Escamilla Angulo,CEP9774425,Enfermería,CS005,Vespertino,2024-10-23,(549)162-5772x12825,,True,"L,M,X,V"
+EMP0027,Esperanza Sessa Linares Martínez,CEP7795139,Odontología,CS005,Nocturno,2020-03-15,+08(3)6037380801,israel24@example.net,True,"L,M,X,V"
+EMP0028,Marisol Elizondo Quezada,CEP4945062,Medicina General,CS005,Matutino,2021-05-31,(188)337-0809x51445,,True,L-S
+EMP0029,José María Clemente Olivares Soliz,CEP7417234,Medicina Preventiva,CS005,Nocturno,2019-02-15,+11(1)6035713690,,True,L-V
+EMP0030,Modesto Miguel Ángel Méndez,CEP4083370,Odontología,CS005,Mixto,2020-10-06,04020295846,,True,L-S
+EMP0031,Natividad Carmen Balderas de Anda,CEP1724750,Enfermería,CS005,Mixto,2017-09-25,00555136411,,True,Variable
+EMP0032,Pamela Cedillo Camarillo,CEP6274740,Medicina Preventiva,CS005,Vespertino,2017-09-09,123-552-1138,cardonaclemente@example.org,True,L-V
+EMP0033,Fabiola Fierro Chapa,CEP3456964,Medicina General,CS005,Vespertino,2023-03-16,687.885.9128x84224,,True,L-V
+EMP0034,Rosario Alonso,CEP5364086,Medicina General,CS005,Vespertino,2019-09-14,(396)057-4578x43515,,True,L-S
+EMP0035,Jorge José Luis Galarza Rosas,CEP2122641,Medicina Preventiva,CS005,Mixto,2019-01-14,+33(2)1886248349,,True,"L,M,X,V"
+EMP0036,Guillermo Rodarte Tirado,CEP8211080,Medicina Preventiva,CS005,Mixto,2017-09-30,03166679125,araceli06@example.org,True,L-S
+EMP0037,Esteban Mora Pantoja,CEP5703208,Odontología,CS005,Vespertino,2016-08-17,404-587-4476,berta50@example.org,True,L-S
+EMP0038,Patricio Esperanza Serrano Anaya,CEP3052765,Enfermería,CS005,Mixto,2021-04-13,571-838-1827,mhidalgo@example.org,True,L-S
+EMP0039,Mónica Olvera Santacruz,CEP7533297,Medicina Preventiva,CS005,Vespertino,2017-06-15,312.821.9132x7028,rubybarrientos@example.net,True,L-V
+EMP0040,Lic. Ofelia Irizarry,CEP9710399,Medicina Preventiva,CS005,Mixto,2015-08-05,038.700.4567,abraham57@example.com,True,"L,M,X,V"
+EMP0041,Aurelio Carolina Zelaya Yáñez,CEP5899596,Medicina General,CS005,Matutino,2020-05-31,(213)478-3529x21326,bruno91@example.com,True,L-S
+EMP0042,Anel Carrera Garza,CEP7658581,Enfermería,CS005,Mixto,2020-12-09,964.657.9848,,True,L-S
+EMP0043,Abril Casárez Muñiz,CEP8862361,Enfermería,CS005,Matutino,2021-02-22,1-737-448-4788,oliviamaya@example.org,True,L-V
+EMP0044,Rodolfo Jaime Vigil,CEP5069252,Odontología,CS005,Nocturno,2020-04-15,(155)452-1352x1171,utorrez@example.net,True,Variable
+EMP0045,Sara Palomo Coronado,CEP7701718,Enfermería,CS005,Nocturno,2023-10-19,(457)293-1240x752,,True,"L,M,X,V"

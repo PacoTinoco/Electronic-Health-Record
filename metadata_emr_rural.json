@@ -1,0 +1,140 @@
+{
+  "fecha_generacion": "2025-06-07 21:28:23",
+  "centros_salud": [
+    {
+      "id": "CS001",
+      "nombre": "Centro de Salud Tzitzio",
+      "lat": 19.5833,
+      "lon": -100.9167,
+      "tipo": "Básico"
+    },
+    {
+      "id": "CS002",
+      "nombre": "Centro de Salud Tiquicheo",
+      "lat": 18.8833,
+      "lon": -100.75,
+      "tipo": "Básico"
+    },
+    {
+      "id": "CS003",
+      "nombre": "Centro de Salud Madero",
+      "lat": 19.4,
+      "lon": -101.1167,
+      "tipo": "Ampliado"
+    },
+    {
+      "id": "CS004",
+      "nombre": "Centro de Salud Susupuato",
+      "lat": 19.2167,
+      "lon": -100.4,
+      "tipo": "Básico"
+    },
+    {
+      "id": "CS005",
+      "nombre": "Hospital Rural Tuzantla",
+      "lat": 19.2,
+      "lon": -100.5667,
+      "tipo": "Hospital"
+    }
+  ],
+  "enfermedades_comunes": [
+    {
+      "codigo": "A09",
+      "nombre": "Diarrea y gastroenteritis",
+      "peso": 0.2
+    },
+    {
+      "codigo": "J06",
+      "nombre": "Infecciones respiratorias agudas",
+      "peso": 0.25
+    },
+    {
+      "codigo": "E11",
+      "nombre": "Diabetes tipo 2",
+      "peso": 0.15
+    },
+    {
+      "codigo": "I10",
+      "nombre": "Hipertensión esencial",
+      "peso": 0.15
+    },
+    {
+      "codigo": "B82",
+      "nombre": "Parasitosis intestinal",
+      "peso": 0.1
+    },
+    {
+      "codigo": "A90",
+      "nombre": "Dengue",
+      "peso": 0.05
+    },
+    {
+      "codigo": "N39",
+      "nombre": "Infección de vías urinarias",
+      "peso": 0.05
+    },
+    {
+      "codigo": "K29",
+      "nombre": "Gastritis",
+      "peso": 0.05
+    }
+  ],
+  "medicamentos": [
+    {
+      "codigo": "MED001",
+      "nombre": "Paracetamol 500mg",
+      "tipo": "Analgésico",
+      "presentacion": "Tabletas"
+    },
+    {
+      "codigo": "MED002",
+      "nombre": "Amoxicilina 500mg",
+      "tipo": "Antibiótico",
+      "presentacion": "Cápsulas"
+    },
+    {
+      "codigo": "MED003",
+      "nombre": "Metformina 850mg",
+      "tipo": "Antidiabético",
+      "presentacion": "Tabletas"
+    },
+    {
+      "codigo": "MED004",
+      "nombre": "Losartán 50mg",
+      "tipo": "Antihipertensivo",
+      "presentacion": "Tabletas"
+    },
+    {
+      "codigo": "MED005",
+      "nombre": "Albendazol 400mg",
+      "tipo": "Antiparasitario",
+      "presentacion": "Tabletas"
+    },
+    {
+      "codigo": "MED006",
+      "nombre": "Suero oral",
+      "tipo": "Rehidratación",
+      "presentacion": "Sobre"
+    },
+    {
+      "codigo": "MED007",
+      "nombre": "Ibuprofeno 400mg",
+      "tipo": "Antiinflamatorio",
+      "presentacion": "Tabletas"
+    },
+    {
+      "codigo": "MED008",
+      "nombre": "Omeprazol 20mg",
+      "tipo": "Antiácido",
+      "presentacion": "Cápsulas"
+    }
+  ],
+  "resumen_datasets": {
+    "pacientes": 1000,
+    "historias_clinicas": 5000,
+    "prescripciones": 10028,
+    "inventario": 40,
+    "personal": 45,
+    "conectividad": 150
+  }
+}
