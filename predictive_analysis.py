@@ -142,24 +142,15 @@ patient_risk = pd.merge(patient_features, patient_history, on='paciente_id', how
 patient_risk['days_since_last_visit'] = (datetime.now() - pd.to_datetime(patient_risk['last_visit'])).dt.days
 
 # Features para el modelo
-risk_features = ['edad', 'distancia_centro_km', 'tiene_seguro_popular', 
+risk_features = ['edad', 'distancia_centro_km', 'es_cronico', 'tiene_seguro_popular', 
                  'total_visits', 'days_since_last_visit']
 
 # Crear target sintético (para demostración)
-# Verificar si existe la columna es_cronico, si no, usar una lógica alternativa
-if 'es_cronico' in patient_risk.columns:
-    patient_risk['high_risk'] = (
-        (patient_risk['es_cronico'] == 1) & 
-        (patient_risk['distancia_centro_km'] > 20) & 
-        (patient_risk['days_since_last_visit'] > 180)
-    ).astype(int)
-else:
-    # Alternativa: considerar alto riesgo basado en edad y distancia
-    patient_risk['high_risk'] = (
-        (patient_risk['edad'] > 60) & 
-        (patient_risk['distancia_centro_km'] > 20) & 
-        (patient_risk['days_since_last_visit'] > 180)
-    ).astype(int)
+patient_risk['high_risk'] = (
+    (patient_risk['es_cronico'] == 1) & 
+    (patient_risk['distancia_centro_km'] > 20) & 
+    (patient_risk['days_since_last_visit'] > 180)
+).astype(int)
 
 # Preparar datos para modelo
 X_risk = patient_risk[risk_features].fillna(0)
