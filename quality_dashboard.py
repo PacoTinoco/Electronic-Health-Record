@@ -159,7 +159,7 @@ with col2:
         color_continuous_scale='RdYlGn',
         title="Health Center Performance Ranking"
     )
-    fig_ranking.update_yaxis(categoryorder='total ascending')
+    fig_ranking.update_layout(yaxis={'categoryorder':'total ascending'})
     st.plotly_chart(fig_ranking, use_container_width=True)
 
 # SECCIÓN 3: ANÁLISIS DE TIEMPOS Y EFICIENCIA
