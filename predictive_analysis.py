@@ -132,7 +132,7 @@ st.header("🎯 Patient Risk Prediction")
 # Preparar features para predicción
 patient_features = df_patients.copy()
 patient_history = df_history.groupby('paciente_id').agg({
-    'diagnostico_codigo': 'count',
+    'diagnostico_cie10': 'count',
     'fecha_consulta': ['min', 'max']
 }).reset_index()
 patient_history.columns = ['paciente_id', 'total_visits', 'first_visit', 'last_visit']

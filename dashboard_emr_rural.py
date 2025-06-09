@@ -20,13 +20,13 @@ st.markdown("---")
 # Cargar datos
 @st.cache_data
 def cargar_datos():
-    df_pacientes = pd.read_csv('pacientes_rural.csv')
-    df_historias = pd.read_csv('historias_clinicas.csv')
-    df_prescripciones = pd.read_csv('prescripciones.csv')
-    df_inventario = pd.read_csv('inventario_medicamentos.csv')
-    df_personal = pd.read_csv('personal_medico.csv')
-    df_conectividad = pd.read_csv('conectividad.csv')
-    df_segmentacion = pd.read_csv('pacientes_segmentados.csv')
+    df_pacientes = pd.read_csv('data/pacientes_rural.csv')
+    df_historias = pd.read_csv('data/historias_clinicas.csv')
+    df_prescripciones = pd.read_csv('data/prescripciones.csv')
+    df_inventario = pd.read_csv('data/inventario_medicamentos.csv')
+    df_personal = pd.read_csv('data/personal_medico.csv')
+    df_conectividad = pd.read_csv('data/conectividad.csv')
+    df_segmentacion = pd.read_csv('data/pacientes_segmentados.csv')
     
     # Convertir fechas
     df_historias['fecha_consulta'] = pd.to_datetime(df_historias['fecha_consulta'])
@@ -339,6 +339,5 @@ st.sidebar.info(
     3. Se abrirá en el navegador
     """
 )
-
 
 
