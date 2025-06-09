@@ -97,19 +97,3 @@ df_cronicos = df_historias[df_historias['paciente_id'].isin(pacientes_cronicos)]
 top_diagnosticos = df_cronicos['diagnostico_nombre'].value_counts().head(10)
 for i, (diag, count) in enumerate(top_diagnosticos.items(), 1):
     print(f"{i}. {diag}: {count} casos")
-
-# Opcional: Crear un archivo de resumen
-resumen = {
-    'total_pacientes': len(df_pacientes),
-    'pacientes_cronicos': df_pacientes['es_cronico'].sum(),
-    'porcentaje_cronicos': df_pacientes['es_cronico'].mean() * 100,
-    'diagnosticos_cronicos_identificados': len(pacientes_cronicos),
-    'top_diagnosticos_cronicos': top_diagnosticos.to_dict()
-}
-
-# Guardar resumen
-import json
-with open('data/resumen_pacientes_cronicos.json', 'w', encoding='utf-8') as f:
-    json.dump(resumen, f, indent=2, ensure_ascii=False)
-
-print("\n📄 Se creó un archivo de resumen en: data/resumen_pacientes_cronicos.json")
