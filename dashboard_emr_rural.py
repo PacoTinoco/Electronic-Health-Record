@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
+from deep_translator import GoogleTranslator
+import time
 
 # Configuración de la página
 st.set_page_config(
@@ -13,8 +15,67 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Inicializar el estado del idioma
+if 'language' not in st.session_state:
+    st.session_state.language = 'es'
+
+# Cache para traducciones (evita re-traducir)
+if 'translation_cache' not in st.session_state:
+    st.session_state.translation_cache = {}
+
+# Función de traducción con cache
+@st.cache_data
+def translate_text(text, target_lang='en'):
+    """Traduce texto usando cache para evitar re-traducciones"""
+    if pd.isna(text) or text == '':
+        return text
+    
+    # Crear clave única para el cache
+    cache_key = f"{text}_{target_lang}"
+    
+    # Verificar si ya está traducido
+    if cache_key in st.session_state.translation_cache:
+        return st.session_state.translation_cache[cache_key]
+    
+    try:
+        if target_lang == 'es':  # Si es español, no traducir
+            return text
+            
+        translator = GoogleTranslator(source='es', target=target_lang)
+        translated = translator.translate(str(text))
+        
+        # Guardar en cache
+        st.session_state.translation_cache[cache_key] = translated
+        return translated
+    except:
+        return text  # Si falla, devolver original
+
+# Función helper simplificada
+def t(text):
+    """Traduce según el idioma seleccionado"""
+    if st.session_state.language == 'es':
+        return text
+    return translate_text(text, st.session_state.language)
+
+# SELECTOR DE IDIOMA EN LA PARTE SUPERIOR
+col1, col2, col3 = st.columns([8, 1, 1])
+
+with col2:
+    if st.button("🇲🇽 ES", 
+                 type="secondary" if st.session_state.language != 'es' else "primary",
+                 use_container_width=True):
+        st.session_state.language = 'es'
+        st.rerun()
+
+with col3:
+    if st.button("🇺🇸 EN", 
+                 type="secondary" if st.session_state.language != 'en' else "primary",
+                 use_container_width=True):
+        st.session_state.language = 'en'
+        st.rerun()
+
 # Título principal
-st.title("🏥 Dashboard EMR Rural - Centros de Salud Michoacán")
+st.title(t("🏥 Dashboard EMR Rural - Centros de Salud Michoacán"))
 st.markdown("---")
 
 # Cargar datos
@@ -38,29 +99,33 @@ def cargar_datos():
 df_pacientes, df_historias, df_prescripciones, df_inventario, df_personal, df_conectividad, df_segmentacion = cargar_datos()
 
 # Sidebar para filtros
-st.sidebar.header("🔍 Filtros")
+st.sidebar.header(t("🔍 Filtros"))
 
 # Filtro de centro de salud
-centros = ['Todos'] + list(df_pacientes['centro_salud_nombre'].unique())
-centro_seleccionado = st.sidebar.selectbox("Centro de Salud", centros)
+centros = [t('Todos')] + list(df_pacientes['centro_salud_nombre'].unique())
+centro_seleccionado = st.sidebar.selectbox(
+    t("Centro de Salud"), 
+    centros,
+    format_func=lambda x: t(x) if x != t('Todos') else x
+)
 
 # Filtro de fecha
 fecha_inicio = st.sidebar.date_input(
-    "Fecha inicio",
+    t("Fecha inicio"),
     value=df_historias['fecha_consulta'].min(),
     min_value=df_historias['fecha_consulta'].min(),
     max_value=df_historias['fecha_consulta'].max()
 )
 
 fecha_fin = st.sidebar.date_input(
-    "Fecha fin",
+    t("Fecha fin"),
     value=df_historias['fecha_consulta'].max(),
     min_value=df_historias['fecha_consulta'].min(),
     max_value=df_historias['fecha_consulta'].max()
 )
 
 # Aplicar filtros
-if centro_seleccionado != 'Todos':
+if centro_seleccionado not in ['Todos', 'All', t('Todos')]:
     df_pacientes_filtrado = df_pacientes[df_pacientes['centro_salud_nombre'] == centro_seleccionado]
     centro_id = df_pacientes_filtrado['centro_salud_id'].iloc[0]
     df_historias_filtrado = df_historias[df_historias['centro_salud_id'] == centro_id]
@@ -79,34 +144,34 @@ df_historias_filtrado = df_historias_filtrado[
 ]
 
 # SECCIÓN 1: MÉTRICAS PRINCIPALES
-st.header("📊 Indicadores Principales")
+st.header(t("📊 Indicadores Principales"))
 col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     total_pacientes = len(df_pacientes_filtrado)
     pacientes_activos = df_pacientes_filtrado['activo'].sum()
     st.metric(
-        "Total Pacientes",
+        t("Total Pacientes"),
         f"{total_pacientes:,}",
-        f"{pacientes_activos} activos"
+        f"{pacientes_activos} {t('activos')}"
     )
 
 with col2:
     total_consultas = len(df_historias_filtrado)
     consultas_mes = len(df_historias_filtrado[df_historias_filtrado['fecha_consulta'] >= datetime.now() - timedelta(days=30)])
     st.metric(
-        "Consultas Totales",
+        t("Consultas Totales"),
         f"{total_consultas:,}",
-        f"{consultas_mes} último mes"
+        f"{consultas_mes} {t('último mes')}"
     )
 
 with col3:
     total_personal = len(df_personal_filtrado)
     medicos = len(df_personal_filtrado[df_personal_filtrado['especialidad'] == 'Medicina General'])
     st.metric(
-        "Personal Médico",
+        t("Personal Médico"),
         total_personal,
-        f"{medicos} médicos"
+        f"{medicos} {t('médicos')}"
     )
 
 with col4:
@@ -114,9 +179,9 @@ with col4:
     df_inventario_filtrado['meses_stock'] = df_inventario_filtrado['stock_actual'] / df_inventario_filtrado['stock_minimo']
     med_criticos = len(df_inventario_filtrado[df_inventario_filtrado['meses_stock'] < 1])
     st.metric(
-        "Medicamentos Críticos",
+        t("Medicamentos Críticos"),
         med_criticos,
-        "⚠️ Reabastecer" if med_criticos > 0 else "✅ OK",
+        t("⚠️ Reabastecer") if med_criticos > 0 else t("✅ OK"),
         delta_color="inverse"
     )
 
@@ -125,9 +190,9 @@ with col5:
     if 'grupo_riesgo' in df_segmentacion.columns:
         alto_riesgo = len(df_segmentacion[df_segmentacion['grupo_riesgo'] == 'Alto Riesgo'])
         st.metric(
-            "Pacientes Alto Riesgo",
+            t("Pacientes Alto Riesgo"),
             alto_riesgo,
-            "Requieren seguimiento"
+            t("Requieren seguimiento")
         )
 
 st.markdown("---")
@@ -136,13 +201,24 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("🦠 Top Diagnósticos")
-    top_diagnosticos = df_historias_filtrado['diagnostico_nombre'].value_counts().head(10)
+    st.subheader(t("🦠 Top Diagnósticos"))
+    
+    # Copiar datos para traducción
+    df_historias_temp = df_historias_filtrado.copy()
+    
+    # Traducir diagnósticos si es necesario
+    if st.session_state.language != 'es':
+        df_historias_temp['diagnostico_nombre'] = df_historias_temp['diagnostico_nombre'].apply(
+            lambda x: translate_text(x, st.session_state.language)
+        )
+    
+    top_diagnosticos = df_historias_temp['diagnostico_nombre'].value_counts().head(10)
+    
     fig_diag = px.bar(
         x=top_diagnosticos.values,
         y=top_diagnosticos.index,
         orientation='h',
-        labels={'x': 'Número de Casos', 'y': 'Diagnóstico'},
+        labels={'x': t('Número de Casos'), 'y': t('Diagnóstico')},
         color=top_diagnosticos.values,
         color_continuous_scale='Reds'
     )
@@ -150,7 +226,7 @@ with col1:
     st.plotly_chart(fig_diag, use_container_width=True)
 
 with col2:
-    st.subheader("📈 Tendencia de Consultas")
+    st.subheader(t("📈 Tendencia de Consultas"))
     df_historias_filtrado['mes'] = df_historias_filtrado['fecha_consulta'].dt.to_period('M').astype(str)
     consultas_mes = df_historias_filtrado.groupby('mes').size().reset_index(name='consultas')
     fig_tendencia = px.line(
@@ -158,28 +234,42 @@ with col2:
         x='mes',
         y='consultas',
         markers=True,
-        labels={'mes': 'Mes', 'consultas': 'Número de Consultas'}
+        labels={'mes': t('Mes'), 'consultas': t('Número de Consultas')}
     )
     fig_tendencia.update_layout(height=400)
     st.plotly_chart(fig_tendencia, use_container_width=True)
 
 # SECCIÓN 3: GESTIÓN DE RECURSOS
-st.header("💊 Gestión de Recursos")
+st.header(t("💊 Gestión de Recursos"))
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("📦 Estado del Inventario")
+    st.subheader(t("📦 Estado del Inventario"))
     # Análisis de stock
     df_stock = df_inventario_filtrado.groupby('medicamento_nombre').agg({
         'stock_actual': 'sum',
         'stock_minimo': 'sum'
     }).reset_index()
     df_stock['porcentaje'] = (df_stock['stock_actual'] / df_stock['stock_minimo'] * 100).round(0)
-    df_stock['estado'] = df_stock['porcentaje'].apply(
-        lambda x: '🔴 Crítico' if x < 50 else '🟡 Alerta' if x < 100 else '🟢 OK'
-    )
     
-    # Mostrar tabla con colores
+    # Traducir estados
+    def get_estado(x):
+        if x < 50:
+            return t('🔴 Crítico')
+        elif x < 100:
+            return t('🟡 Alerta')
+        else:
+            return t('🟢 OK')
+    
+    df_stock['estado'] = df_stock['porcentaje'].apply(get_estado)
+    
+    # Traducir nombres de medicamentos si es necesario
+    if st.session_state.language != 'es':
+        df_stock['medicamento_nombre'] = df_stock['medicamento_nombre'].apply(
+            lambda x: translate_text(x, st.session_state.language)
+        )
+    
+    # Mostrar tabla
     st.dataframe(
         df_stock[['medicamento_nombre', 'stock_actual', 'estado']].sort_values('stock_actual'),
         use_container_width=True,
@@ -187,13 +277,13 @@ with col1:
     )
 
 with col2:
-    st.subheader("👥 Carga de Trabajo")
-    if centro_seleccionado != 'Todos':
+    st.subheader(t("👥 Carga de Trabajo"))
+    if centro_seleccionado not in ['Todos', 'All', t('Todos')]:
         carga = len(df_historias_filtrado) / max(len(df_personal_filtrado), 1)
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=carga,
-            title={'text': "Consultas por Empleado"},
+            title={'text': t("Consultas por Empleado")},
             gauge={
                 'axis': {'range': [None, 500]},
                 'bar': {'color': "darkblue"},
@@ -211,133 +301,47 @@ with col2:
         ))
         fig_gauge.update_layout(height=300)
         st.plotly_chart(fig_gauge, use_container_width=True)
-    else:
-        # Mostrar por centro
-        carga_centros = df_historias.groupby('centro_salud_id').size() / df_personal.groupby('centro_salud_id').size()
-        fig_carga = px.bar(
-            x=carga_centros.index,
-            y=carga_centros.values,
-            labels={'x': 'Centro', 'y': 'Consultas/Empleado'},
-            color=carga_centros.values,
-            color_continuous_scale='RdYlGn_r'
-        )
-        fig_carga.update_layout(height=300)
-        st.plotly_chart(fig_carga, use_container_width=True)
 
-with col3:
-    st.subheader("📡 Conectividad")
-    if centro_seleccionado != 'Todos':
-        conectividad_centro = df_conectividad[df_conectividad['centro_salud_id'] == centro_id].tail(7)
-        fig_conectividad = px.line(
-            conectividad_centro,
-            x='fecha',
-            y='horas_conectado',
-            markers=True,
-            labels={'fecha': 'Fecha', 'horas_conectado': 'Horas Conectado'}
-        )
-        fig_conectividad.add_hline(y=12, line_dash="dash", line_color="red", 
-                                  annotation_text="Mínimo recomendado")
-        fig_conectividad.update_layout(height=300)
-        st.plotly_chart(fig_conectividad, use_container_width=True)
-    else:
-        promedio_conectividad = df_conectividad.groupby('centro_salud_id')['horas_conectado'].mean()
-        st.bar_chart(promedio_conectividad)
-
-# SECCIÓN 4: ANÁLISIS GEOGRÁFICO Y SEGMENTACIÓN
-st.header("🗺️ Análisis Geográfico y Segmentación")
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("📍 Distribución de Pacientes por Distancia")
-    fig_dist = px.histogram(
-        df_segmentacion,
-        x='distancia_centro_km',
-        nbins=30,
-        labels={'distancia_centro_km': 'Distancia al Centro (km)', 'count': 'Número de Pacientes'},
-        color_discrete_sequence=['#1f77b4']
-    )
-    fig_dist.add_vline(x=20, line_dash="dash", line_color="red", 
-                       annotation_text="Accesibilidad Baja")
-    fig_dist.update_layout(height=400)
-    st.plotly_chart(fig_dist, use_container_width=True)
-
-with col2:
-    st.subheader("🎯 Segmentación de Pacientes")
-    if 'grupo_riesgo' in df_segmentacion.columns and 'accesibilidad' in df_segmentacion.columns:
-        # Crear matriz de segmentación
-        matriz_seg = pd.crosstab(df_segmentacion['grupo_riesgo'], df_segmentacion['accesibilidad'])
-        fig_seg = px.imshow(
-            matriz_seg,
-            labels=dict(x="Accesibilidad", y="Grupo de Riesgo", color="Pacientes"),
-            color_continuous_scale='Reds',
-            text_auto=True
-        )
-        fig_seg.update_layout(height=400)
-        st.plotly_chart(fig_seg, use_container_width=True)
-
-# SECCIÓN 5: ALERTAS Y RECOMENDACIONES
-st.header("⚠️ Alertas y Recomendaciones")
+# SECCIÓN 5: ALERTAS
+st.header(t("⚠️ Alertas y Recomendaciones"))
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("🚨 Alertas Críticas")
+    st.subheader(t("🚨 Alertas Críticas"))
     alertas = []
     
     # Medicamentos críticos
     med_criticos_lista = df_inventario_filtrado[df_inventario_filtrado['meses_stock'] < 1]['medicamento_nombre'].tolist()
     if med_criticos_lista:
         for med in med_criticos_lista[:3]:
-            alertas.append(f"❗ {med} - Stock crítico")
-    
-    # Pacientes de alto riesgo sin seguimiento
-    if 'grupo_riesgo' in df_segmentacion.columns:
-        alto_riesgo_count = len(df_segmentacion[
-            (df_segmentacion['grupo_riesgo'] == 'Alto Riesgo') & 
-            (df_segmentacion['accesibilidad'] == 'Baja')
-        ])
-        if alto_riesgo_count > 0:
-            alertas.append(f"⚠️ {alto_riesgo_count} pacientes alto riesgo con baja accesibilidad")
+            alertas.append(f"❗ {t(med)} - {t('Stock crítico')}")
     
     if alertas:
         for alerta in alertas:
             st.warning(alerta)
     else:
-        st.success("✅ Sin alertas críticas")
-
-with col2:
-    st.subheader("📋 Acciones Recomendadas")
-    if med_criticos > 0:
-        st.info("🏪 Realizar pedido urgente de medicamentos")
-    
-    if centro_seleccionado != 'Todos' and len(df_personal_filtrado) > 0:
-        if len(df_historias_filtrado) / len(df_personal_filtrado) > 300:
-            st.info("👥 Considerar contratar más personal")
-    
-    st.info("🚐 Programar brigada móvil para zonas alejadas")
-
-with col3:
-    st.subheader("📊 Resumen Ejecutivo")
-    # Calcular métricas resumen
-    tasa_cronicos = (df_segmentacion['es_cronico'].sum() / len(df_segmentacion) * 100).round(1)
-    cobertura_seguro = (df_pacientes['tiene_seguro_popular'].sum() / len(df_pacientes) * 100).round(1)
-    
-    st.metric("Pacientes Crónicos", f"{tasa_cronicos}%")
-    st.metric("Cobertura Seguro Popular", f"{cobertura_seguro}%")
-    st.metric("Distancia Promedio", f"{df_pacientes['distancia_centro_km'].mean():.1f} km")
+        st.success(t("✅ Sin alertas críticas"))
 
 # Footer
 st.markdown("---")
-st.markdown("🏥 **Sistema EMR Rural** | Actualizado: " + datetime.now().strftime("%Y-%m-%d %H:%M"))
+st.markdown(f"🏥 **{t('Sistema EMR Rural')}** | {t('Actualizado')}: " + datetime.now().strftime("%Y-%m-%d %H:%M"))
 
-# Instrucciones para ejecutar
-st.sidebar.markdown("---")
-st.sidebar.info(
-    """
-    **Para ejecutar el dashboard:**
-    1. Instalar: `pip install streamlit plotly`
-    2. Ejecutar: `streamlit run dashboard_emr_rural.py`
-    3. Se abrirá en el navegador
-    """
-)
-
+# Nota sobre la traducción
+if st.session_state.language != 'es':
+    st.sidebar.info(
+        """
+        🌐 **Auto-translated Dashboard**
+        Using Google Translate API
+        Some medical terms may require review
+        """
+    )
+else:
+    st.sidebar.info(
+        """
+        **Para ejecutar el dashboard:**
+        1. Instalar: `pip install streamlit plotly deep-translator`
+        2. Ejecutar: `streamlit run dashboard_emr_rural.py`
+        3. Se abrirá en el navegador
+        """
+    )
 
