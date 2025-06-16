@@ -168,7 +168,7 @@ with col2:
     with col2_3:
         st.metric("📊 Consumo Diario", f"{med_analysis['consumo_diario_promedio'].sum():.0f}")
 
-# SECCIÓN 2: PREDICCIÓN DE RIESGO DE PACIENTES
+# SECCIÓN 2: PREDICCIÓN DE RIESGO DE PACIENTES - CORREGIDA
 st.header("🎯 Patient Risk Prediction")
 
 # Preparar datos de riesgo
@@ -180,27 +180,87 @@ patient_history.columns = ['paciente_id', 'total_visits', 'first_visit', 'last_v
 
 patient_risk = pd.merge(df_patients, patient_history, on='paciente_id', how='left')
 patient_risk['days_since_last_visit'] = (datetime.now() - pd.to_datetime(patient_risk['last_visit'])).dt.days
-patient_risk['days_since_last_visit'] = patient_risk['days_since_last_visit'].fillna(999)
+patient_risk['days_since_last_visit'] = patient_risk['days_since_last_visit'].fillna(365)
+patient_risk['total_visits'] = patient_risk['total_visits'].fillna(0)
 
-# Crear target de riesgo
-patient_risk['high_risk'] = (
-    (patient_risk['es_cronico'] == 1) & 
-    (patient_risk['distancia_centro_km'] > 20) & 
-    (patient_risk['days_since_last_visit'] > 180)
-).astype(int)
+# CREAR TARGET DE RIESGO MÁS REALISTA
+# Método 1: Basado en múltiples factores con pesos y algo de ruido
+np.random.seed(42)  # Para reproducibilidad
 
-# Entrenar modelo
-risk_features = ['edad', 'distancia_centro_km', 'es_cronico', 'tiene_seguro_popular', 
-                 'total_visits', 'days_since_last_visit']
+# Calcular score de riesgo
+patient_risk['risk_score'] = (
+    (patient_risk['edad'] > 60).astype(int) * 0.2 +  # Edad avanzada
+    (patient_risk['es_cronico'] == 1).astype(int) * 0.3 +  # Enfermedad crónica
+    (patient_risk['distancia_centro_km'] > 30).astype(int) * 0.2 +  # Lejanía
+    (patient_risk['days_since_last_visit'] > 180).astype(int) * 0.2 +  # Abandono
+    (patient_risk['tiene_seguro_popular'] == 0).astype(int) * 0.1 +  # Sin seguro
+    np.random.normal(0, 0.1, len(patient_risk))  # Ruido aleatorio
+)
 
+# Crear grupos de riesgo basados en percentiles
+patient_risk['risk_group'] = pd.qcut(
+    patient_risk['risk_score'], 
+    q=[0, 0.7, 0.85, 1.0], 
+    labels=['Low Risk', 'Medium Risk', 'High Risk']
+)
+
+# Target binario para el modelo (High Risk vs Others)
+patient_risk['high_risk'] = (patient_risk['risk_group'] == 'High Risk').astype(int)
+
+# Agregar más features derivadas
+patient_risk['visits_per_year'] = patient_risk['total_visits'] / (
+    (datetime.now() - pd.to_datetime(patient_risk['first_visit'])).dt.days / 365
+).fillna(1)
+patient_risk['age_distance_interaction'] = patient_risk['edad'] * patient_risk['distancia_centro_km'] / 100
+
+# Features mejoradas para el modelo
+risk_features = [
+    'edad', 
+    'distancia_centro_km', 
+    'es_cronico', 
+    'tiene_seguro_popular', 
+    'total_visits', 
+    'days_since_last_visit',
+    'visits_per_year',
+    'age_distance_interaction'
+]
+
+# Preparar datos
 X_risk = patient_risk[risk_features].fillna(0)
 y_risk = patient_risk['high_risk']
 
-X_train, X_test, y_train, y_test = train_test_split(X_risk, y_risk, test_size=0.2, random_state=42)
-risk_model = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+# División estratificada para mantener balance
+X_train, X_test, y_train, y_test = train_test_split(
+    X_risk, y_risk, 
+    test_size=0.2, 
+    random_state=42, 
+    stratify=y_risk
+)
+
+# Modelo con regularización para evitar overfitting
+from sklearn.ensemble import RandomForestClassifier
+risk_model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=5,  # Limitar profundidad
+    min_samples_split=20,  # Mínimo de muestras para dividir
+    min_samples_leaf=10,  # Mínimo de muestras en hojas
+    random_state=42,
+    n_jobs=-1
+)
 risk_model.fit(X_train, y_train)
 
-# Visualizaciones
+# Evaluación más completa
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+
+y_pred = risk_model.predict(X_test)
+y_pred_proba = risk_model.predict_proba(X_test)[:, 1]
+
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
+# Visualizaciones mejoradas
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -210,24 +270,98 @@ with col1:
         'importance': risk_model.feature_importances_
     }).sort_values('importance', ascending=False)
     
-    fig3 = px.bar(feature_importance, x='importance', y='feature', orientation='h')
+    # Mejorar nombres de features para visualización
+    feature_names_display = {
+        'edad': 'Age',
+        'distancia_centro_km': 'Distance to Center',
+        'es_cronico': 'Chronic Condition',
+        'tiene_seguro_popular': 'Has Insurance',
+        'total_visits': 'Total Visits',
+        'days_since_last_visit': 'Days Since Last Visit',
+        'visits_per_year': 'Visits per Year',
+        'age_distance_interaction': 'Age × Distance'
+    }
+    feature_importance['feature_display'] = feature_importance['feature'].map(feature_names_display)
+    
+    fig3 = px.bar(
+        feature_importance, 
+        x='importance', 
+        y='feature_display', 
+        orientation='h',
+        title="Risk Factor Importance"
+    )
+    fig3.update_layout(yaxis_title="", xaxis_title="Importance")
     st.plotly_chart(fig3, use_container_width=True)
 
 with col2:
     st.subheader("Risk Distribution")
-    risk_counts = patient_risk['high_risk'].value_counts()
-    fig4 = px.pie(values=risk_counts.values, names=['Low Risk', 'High Risk'],
-                  color_discrete_map={'Low Risk': 'blue', 'High Risk': 'red'})
+    
+    # Mostrar distribución de 3 grupos
+    risk_dist = patient_risk['risk_group'].value_counts().sort_index()
+    
+    fig4 = px.pie(
+        values=risk_dist.values,
+        names=risk_dist.index,
+        title="Patient Risk Distribution",
+        color_discrete_map={
+            'Low Risk': '#4CAF50',
+            'Medium Risk': '#FFC107', 
+            'High Risk': '#F44336'
+        }
+    )
     st.plotly_chart(fig4, use_container_width=True)
 
 with col3:
     st.subheader("Model Performance")
-    y_pred = risk_model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
     
-    st.metric("Model Accuracy", f"{accuracy:.2%}")
-    st.metric("High Risk Patients", f"{patient_risk['high_risk'].sum()}")
+    # Métricas más realistas
+    col3_1, col3_2 = st.columns(2)
+    with col3_1:
+        st.metric("Accuracy", f"{accuracy:.1%}")
+        st.metric("Precision", f"{precision:.1%}")
+    with col3_2:
+        st.metric("Recall", f"{recall:.1%}")
+        st.metric("F1-Score", f"{f1:.1%}")
+    
+    # Información adicional
+    st.metric("High Risk Patients", f"{patient_risk['high_risk'].sum():,}")
     st.metric("Total Patients", f"{len(patient_risk):,}")
+
+# Mostrar matriz de confusión en un expander
+with st.expander("Ver Matriz de Confusión y Detalles del Modelo"):
+    cm = confusion_matrix(y_test, y_pred)
+    
+    fig_cm = px.imshow(
+        cm,
+        labels=dict(x="Predicted", y="Actual", color="Count"),
+        x=['Low/Medium Risk', 'High Risk'],
+        y=['Low/Medium Risk', 'High Risk'],
+        color_continuous_scale='Blues',
+        text_auto=True
+    )
+    fig_cm.update_layout(title="Confusion Matrix")
+    st.plotly_chart(fig_cm, use_container_width=True)
+    
+    # Mostrar distribución de probabilidades
+    fig_prob = px.histogram(
+        x=y_pred_proba,
+        nbins=30,
+        title="Distribution of Risk Probabilities",
+        labels={'x': 'Probability of High Risk', 'y': 'Count'}
+    )
+    fig_prob.add_vline(x=0.5, line_dash="dash", line_color="red", 
+                       annotation_text="Decision Threshold")
+    st.plotly_chart(fig_prob, use_container_width=True)
+    
+    # Estadísticas del dataset
+    st.write("**Dataset Statistics:**")
+    col_stat1, col_stat2, col_stat3 = st.columns(3)
+    with col_stat1:
+        st.metric("Training Size", f"{len(X_train):,}")
+    with col_stat2:
+        st.metric("Test Size", f"{len(X_test):,}")
+    with col_stat3:
+        st.metric("High Risk %", f"{(y_risk.sum()/len(y_risk)*100):.1f}%")
 
 # SECCIÓN 3: DETECCIÓN DE EPIDEMIAS
 st.header("🦠 Epidemic Detection & Alerts")
