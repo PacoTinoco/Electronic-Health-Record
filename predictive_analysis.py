@@ -98,33 +98,149 @@ with col1:
 with col2:
     st.subheader("Medication Stock Prediction")
     
-    # Análisis de consumo de medicamentos
-    med_consumption = df_prescriptions.groupby('medicamento_nombre').size().reset_index(name='total_prescribed')
+    # Análisis de consumo de medicamentos - CORREGIDO
+    # 1. Calcular consumo diario promedio de los últimos 30 días
+    fecha_limite = df_prescriptions['fecha_prescripcion'].max() - timedelta(days=30)
+    prescripciones_recientes = df_prescriptions[df_prescriptions['fecha_prescripcion'] >= fecha_limite]
+    
+    # Consumo diario promedio por medicamento
+    consumo_diario = prescripciones_recientes.groupby('medicamento_nombre').agg({
+        'cantidad': 'sum'  # Sumamos la cantidad prescrita
+    }).reset_index()
+    consumo_diario['consumo_diario_promedio'] = consumo_diario['cantidad'] / 30
+    
+    # Estado actual del inventario
     inventory_status = df_inventory.groupby('medicamento_nombre').agg({
         'stock_actual': 'sum',
         'stock_minimo': 'sum'
     }).reset_index()
     
     # Merge datos
-    med_analysis = pd.merge(inventory_status, med_consumption, on='medicamento_nombre', how='left')
-    med_analysis['days_until_stockout'] = (med_analysis['stock_actual'] / (med_analysis['total_prescribed'] / 365)).fillna(999)
-    med_analysis['risk_level'] = pd.cut(med_analysis['days_until_stockout'], 
-                                       bins=[0, 7, 30, 90, 999], 
-                                       labels=['Critical', 'High', 'Medium', 'Low'])
+    med_analysis = pd.merge(inventory_status, consumo_diario, on='medicamento_nombre', how='left')
     
-    # Top 10 medicamentos en riesgo
-    at_risk = med_analysis[med_analysis['days_until_stockout'] < 30].sort_values('days_until_stockout')
+    # Calcular días hasta agotamiento
+    # Si no hay consumo reciente, asumimos consumo mínimo de 0.1 para evitar división por cero
+    med_analysis['consumo_diario_promedio'] = med_analysis['consumo_diario_promedio'].fillna(0.1)
+    med_analysis['dias_hasta_agotamiento'] = med_analysis['stock_actual'] / med_analysis['consumo_diario_promedio']
     
-    fig2 = px.bar(
-        at_risk.head(10),
-        x='days_until_stockout',
-        y='medicamento_nombre',
-        orientation='h',
-        color='risk_level',
-        color_discrete_map={'Critical': 'red', 'High': 'orange', 'Medium': 'yellow', 'Low': 'green'},
-        title="Medications at Risk of Stockout"
+    # Clasificar nivel de riesgo
+    med_analysis['nivel_riesgo'] = pd.cut(
+        med_analysis['dias_hasta_agotamiento'], 
+        bins=[-np.inf, 7, 15, 30, 90, np.inf], 
+        labels=['Crítico', 'Muy Alto', 'Alto', 'Medio', 'Bajo']
     )
+    
+    # Agregar información adicional
+    med_analysis['porcentaje_stock'] = (med_analysis['stock_actual'] / med_analysis['stock_minimo'] * 100).round(1)
+    
+    # Filtrar solo medicamentos en riesgo (menos de 30 días de stock)
+    at_risk = med_analysis[med_analysis['dias_hasta_agotamiento'] <= 30].sort_values('dias_hasta_agotamiento')
+    
+    # Si no hay medicamentos en riesgo, mostrar los 10 con menor stock
+    if len(at_risk) == 0:
+        at_risk = med_analysis.nsmallest(10, 'dias_hasta_agotamiento')
+    
+    # Crear visualización mejorada
+    fig2 = go.Figure()
+    
+    # Colores por nivel de riesgo
+    colors = {
+        'Crítico': '#d32f2f',      # Rojo oscuro
+        'Muy Alto': '#f57c00',      # Naranja oscuro
+        'Alto': '#fbc02d',          # Amarillo oscuro
+        'Medio': '#388e3c',         # Verde
+        'Bajo': '#1976d2'           # Azul
+    }
+    
+    for _, row in at_risk.head(10).iterrows():
+        fig2.add_trace(go.Bar(
+            x=[row['dias_hasta_agotamiento']],
+            y=[row['medicamento_nombre']],
+            orientation='h',
+            name=row['medicamento_nombre'],
+            marker_color=colors.get(row['nivel_riesgo'], '#gray'),
+            showlegend=False,
+            text=f"{row['dias_hasta_agotamiento']:.0f} días",
+            textposition='outside',
+            hovertemplate=(
+                f"<b>{row['medicamento_nombre']}</b><br>" +
+                f"Stock actual: {row['stock_actual']:.0f}<br>" +
+                f"Consumo diario: {row['consumo_diario_promedio']:.1f}<br>" +
+                f"Días restantes: {row['dias_hasta_agotamiento']:.0f}<br>" +
+                f"Nivel de riesgo: {row['nivel_riesgo']}<br>" +
+                f"% del stock mínimo: {row['porcentaje_stock']:.1f}%<br>" +
+                "<extra></extra>"
+            )
+        ))
+    
+    # Agregar líneas de referencia
+    fig2.add_vline(x=7, line_dash="dash", line_color="red", 
+                   annotation_text="Crítico (7 días)", annotation_position="top")
+    fig2.add_vline(x=15, line_dash="dash", line_color="orange", 
+                   annotation_text="Alto (15 días)", annotation_position="top")
+    fig2.add_vline(x=30, line_dash="dash", line_color="yellow", 
+                   annotation_text="Medio (30 días)", annotation_position="top")
+    
+    fig2.update_layout(
+        title={
+            'text': "Predicción de Agotamiento de Medicamentos",
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis_title="Días hasta agotamiento",
+        yaxis_title="Medicamento",
+        height=400,
+        showlegend=False,
+        xaxis=dict(range=[0, max(35, at_risk.head(10)['dias_hasta_agotamiento'].max() * 1.1)])
+    )
+    
     st.plotly_chart(fig2, use_container_width=True)
+    
+    # Agregar métricas debajo del gráfico
+    col2_1, col2_2, col2_3 = st.columns(3)
+    
+    with col2_1:
+        meds_criticos = len(med_analysis[med_analysis['nivel_riesgo'] == 'Crítico'])
+        st.metric("🚨 Críticos", meds_criticos, 
+                  help="Medicamentos con menos de 7 días de stock")
+    
+    with col2_2:
+        meds_alto_riesgo = len(med_analysis[med_analysis['nivel_riesgo'].isin(['Alto', 'Muy Alto'])])
+        st.metric("⚠️ Alto Riesgo", meds_alto_riesgo,
+                  help="Medicamentos con 7-30 días de stock")
+    
+    with col2_3:
+        consumo_total_diario = med_analysis['consumo_diario_promedio'].sum()
+        st.metric("📊 Consumo Diario Total", f"{consumo_total_diario:.0f}",
+                  help="Unidades consumidas por día en promedio")
+    
+    # Tabla expandible con detalles
+    with st.expander("Ver detalles de todos los medicamentos en riesgo"):
+        # Preparar tabla con formato
+        tabla_riesgo = at_risk[['medicamento_nombre', 'stock_actual', 'consumo_diario_promedio', 
+                                'dias_hasta_agotamiento', 'nivel_riesgo', 'porcentaje_stock']].copy()
+        
+        tabla_riesgo.columns = ['Medicamento', 'Stock Actual', 'Consumo Diario', 
+                               'Días Restantes', 'Nivel de Riesgo', '% Stock Mínimo']
+        
+        # Formatear columnas
+        tabla_riesgo['Consumo Diario'] = tabla_riesgo['Consumo Diario'].round(1)
+        tabla_riesgo['Días Restantes'] = tabla_riesgo['Días Restantes'].round(0).astype(int)
+        tabla_riesgo['% Stock Mínimo'] = tabla_riesgo['% Stock Mínimo'].round(1).astype(str) + '%'
+        
+        # Aplicar estilos condicionales
+        def highlight_risk(row):
+            if row['Nivel de Riesgo'] == 'Crítico':
+                return ['background-color: #ffcdd2'] * len(row)
+            elif row['Nivel de Riesgo'] in ['Alto', 'Muy Alto']:
+                return ['background-color: #ffe0b2'] * len(row)
+            else:
+                return [''] * len(row)
+        
+        styled_table = tabla_riesgo.style.apply(highlight_risk, axis=1)
+        st.dataframe(styled_table, use_container_width=True, hide_index=True)
 
 # SECCIÓN 2: PREDICCIÓN DE RIESGO DE PACIENTES
 st.header("🎯 Patient Risk Prediction")
