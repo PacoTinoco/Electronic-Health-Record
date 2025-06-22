@@ -242,7 +242,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Paco Tinoco** - *Initial work* - [YourGitHub](https://github.com/PacoTinoco)
+- **Paco Tinoco** - *Initial work* - [https://github.com/PacoTinoco]
 
 ## 🙏 Acknowledgments
 
@@ -255,7 +255,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or suggestions, please open an issue or contact:
 - Email: jose.tinoco@iteso.mx
-- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/jos%C3%A9-francisco-tinoco-ceja-908681265/)
+- LinkedIn: [https://www.linkedin.com/in/jos%C3%A9-francisco-tinoco-ceja-908681265/]
 
 ## 📈 Performance Metrics
 
